@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>WE Possession Calendar</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -14,7 +14,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap');
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 :root {
   --ink: #0E1318;
   --panel: #141A21;
@@ -261,8 +261,9 @@ function renderHero(){
   $('status').textContent = txt;
   $('status').classList.toggle('now', isNow);
   $('dot').classList.toggle('now', isNow);
-  $('prevBtn').disabled = r.n <= 1;
-  $('nextBtn').disabled = r.n >= 52;
+  const gi = WE_DATA.findIndex(x => x.p === prog && x.n === selN);
+  $('prevBtn').disabled = gi <= 0;
+  $('nextBtn').disabled = gi >= WE_DATA.length - 1;
   $('seg2526').classList.toggle('on', prog === '25/26');
   $('seg2627').classList.toggle('on', prog === '26/27');
 }
@@ -282,9 +283,6 @@ function renderList(){
       + (r.t ? '<span class="rtag">' + r.t + '</span>' : '')
       + '</div>';
   }
-  html += '<div class="foot">25/26 per official Possession Configuration V7 (RailSafe). '
-    + '26/27 is provisional &mdash; derived from the standard pattern (WE01 = 4&ndash;5 Jul 26); '
-    + 'confirm against the official 26/27 Possession Configuration once published.</div>';
   listEl.innerHTML = html;
   markSel(false);
 }
@@ -315,9 +313,22 @@ function setProg(p){
   markSel(true);
 }
 
+function gIndex(){ return WE_DATA.findIndex(r => r.p === prog && r.n === selN); }
+
+function stepGlobal(d){
+  const i = gIndex() + d;
+  if (i < 0 || i >= WE_DATA.length) return;
+  const r = WE_DATA[i];
+  const progChanged = r.p !== prog;
+  prog = r.p; selN = r.n;
+  renderHero();
+  if (progChanged) renderList();
+  markSel(true);
+}
+
 // ---- events ----
-$('prevBtn').addEventListener('click', () => select(selN - 1));
-$('nextBtn').addEventListener('click', () => select(selN + 1));
+$('prevBtn').addEventListener('click', () => stepGlobal(-1));
+$('nextBtn').addEventListener('click', () => stepGlobal(1));
 $('todayBtn').addEventListener('click', () => {
   prog = CURRENT.p; selN = CURRENT.n;
   renderHero(); renderList(); markSel(true);

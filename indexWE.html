@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>WE Possession Calendar</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="WE Cal" />
+<meta name="theme-color" content="#0E1318" />
+<link rel="apple-touch-icon" href="icon.png" />
+<link rel="icon" href="icon.png" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --ink: #0E1318;
+  --panel: #141A21;
+  --rail: #F47B20;
+  --chalk: #EDE9E0;
+  --ballast: #8C93A0;
+  --line: #28303B;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html, body { height: 100%; }
+body {
+  position: fixed; inset: 0; overflow: hidden;
+  background: var(--ink); color: var(--chalk);
+  font-family: 'Barlow', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  display: flex; justify-content: center;
+}
+.cond { font-family: 'Barlow Condensed', 'Barlow', sans-serif; }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+#app {
+  width: 100%; max-width: 30rem;
+  height: 100dvh;
+  display: flex; flex-direction: column;
+  padding-top: var(--safe-top);
+}
+
+/* ---------- header ---------- */
+header {
+  padding: 14px 18px 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.eyebrow {
+  font-size: 11px; letter-spacing: .18em; color: var(--ballast);
+  text-transform: uppercase; font-weight: 600;
+}
+.seg {
+  display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden;
+  flex: none;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent; color: var(--ballast);
+  font: 600 13px 'Barlow', sans-serif; letter-spacing: .04em;
+  padding: 7px 14px; cursor: pointer; touch-action: manipulation;
+}
+.seg button.on { background: var(--rail); color: #16100A; }
+.seg button:focus-visible { outline: 2px solid var(--rail); outline-offset: -2px; }
+
+/* ---------- hero board ---------- */
+.board { padding: 4px 18px 14px; }
+.board-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.step {
+  appearance: none; border: 1px solid var(--line); background: var(--panel);
+  color: var(--chalk); border-radius: 14px;
+  width: 58px; height: 64px; flex: none;
+  font: 600 26px 'Barlow Condensed', sans-serif;
+  cursor: pointer; touch-action: manipulation;
+}
+.step:active { background: #1C242E; }
+.step:disabled { opacity: .25; }
+.step:focus-visible { outline: 2px solid var(--rail); }
+.we-wrap {
+  display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  min-width: 0;
+}
+.we-label {
+  font: 700 34px/1 'Barlow Condensed', sans-serif;
+  color: var(--ballast); letter-spacing: .04em;
+}
+#weInput {
+  appearance: none; border: 0; background: transparent;
+  font: 700 86px/1 'Barlow Condensed', sans-serif;
+  color: var(--rail); width: 2.4ch; text-align: center; caret-color: var(--rail);
+  border-bottom: 2px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+#weInput:focus { outline: none; border-bottom-color: var(--rail); }
+.dates {
+  text-align: center; margin-top: 2px;
+  font: 500 19px/1.3 'Barlow', sans-serif;
+}
+.slot-tag {
+  height: 22px; text-align: center; margin-top: 6px;
+  font: 600 13px/22px 'Barlow', sans-serif; letter-spacing: .03em;
+  color: var(--rail);
+}
+.slot-status {
+  height: 30px; margin-top: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.status-txt { font: 500 14px 'Barlow', sans-serif; color: var(--ballast); }
+.status-txt.now { color: var(--chalk); }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--ballast); flex: none;
+}
+.dot.now { background: var(--rail); }
+@media (prefers-reduced-motion: no-preference) {
+  .dot.now { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(244,123,32,.18); } }
+}
+.today-btn {
+  appearance: none; border: 1px solid var(--rail); background: transparent;
+  color: var(--rail); border-radius: 999px; padding: 5px 14px;
+  font: 600 13px 'Barlow', sans-serif; letter-spacing: .05em;
+  cursor: pointer; touch-action: manipulation;
+}
+.today-btn:active { background: rgba(244,123,32,.15); }
+.today-btn:focus-visible { outline: 2px solid var(--rail); outline-offset: 2px; }
+
+/* ---------- rail divider ---------- */
+.rail-divider {
+  height: 16px; flex: none; margin: 0 18px;
+  background:
+    linear-gradient(var(--rail), var(--rail)) 0 4px / 100% 2px no-repeat,
+    linear-gradient(var(--rail), var(--rail)) 0 10px / 100% 2px no-repeat,
+    repeating-linear-gradient(90deg, #39424E 0 3px, transparent 3px 16px) 0 0 / 100% 100%;
+  opacity: .85;
+}
+
+/* ---------- list ---------- */
+#list {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 6px 18px calc(24px + var(--safe-bottom));
+}
+.month {
+  font: 600 12px 'Barlow Condensed', sans-serif; letter-spacing: .22em;
+  color: var(--ballast); padding: 18px 2px 6px;
+}
+.row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 10px; border-radius: 12px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+.row + .row { border-top: 1px solid transparent; }
+.row .badge {
+  font: 700 19px 'Barlow Condensed', sans-serif; letter-spacing: .03em;
+  color: var(--chalk); width: 58px; flex: none;
+}
+.row .rdates { font: 500 15px 'Barlow', sans-serif; color: var(--chalk); flex: 1; }
+.row .rtag { font: 600 11px 'Barlow', sans-serif; color: var(--rail); letter-spacing: .03em; text-align: right; max-width: 40%; }
+.row .nowchip {
+  font: 700 10px 'Barlow', sans-serif; letter-spacing: .12em;
+  color: #16100A; background: var(--rail); border-radius: 6px;
+  padding: 2px 6px; flex: none;
+}
+.row.past { opacity: .4; }
+.row.sel { background: var(--panel); border-left-color: var(--rail); }
+.foot {
+  margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line);
+  font: 400 12px/1.55 'Barlow', sans-serif; color: var(--ballast);
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="eyebrow">Sydney Trains</div>
+      <div class="eyebrow" style="color:var(--chalk); letter-spacing:.14em; margin-top:2px;">Weekend Possessions</div>
+    </div>
+    <div class="seg" role="tablist" aria-label="Program year">
+      <button id="seg2526" role="tab">25/26</button>
+      <button id="seg2627" role="tab">26/27</button>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="board-row">
+      <button class="step" id="prevBtn" aria-label="Previous weekend">&#8249;</button>
+      <div class="we-wrap">
+        <span class="we-label">WE</span>
+        <input id="weInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" aria-label="Weekend number" />
+      </div>
+      <button class="step" id="nextBtn" aria-label="Next weekend">&#8250;</button>
+    </div>
+    <div class="dates tnum" id="dates"></div>
+    <div class="slot-tag" id="tag"></div>
+    <div class="slot-status">
+      <span class="dot" id="dot"></span>
+      <span class="status-txt" id="status"></span>
+      <button class="today-btn" id="todayBtn">Today</button>
+    </div>
+  </div>
+
+  <div class="rail-divider" aria-hidden="true"></div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const WE_DATA=[{"p":"25/26","n":1,"s":"2025-07-05","e":"2025-07-06","full":"Sat 5 \u2013 Sun 6 Jul 2025","short":"5\u20136 Jul","m":"JULY 2025","t":"","lw":0},{"p":"25/26","n":2,"s":"2025-07-12","e":"2025-07-13","full":"Sat 12 \u2013 Sun 13 Jul 2025","short":"12\u201313 Jul","m":"JULY 2025","t":"","lw":0},{"p":"25/26","n":3,"s":"2025-07-19","e":"2025-07-20","full":"Sat 19 \u2013 Sun 20 Jul 2025","short":"19\u201320 Jul","m":"JULY 2025","t":"","lw":0},{"p":"25/26","n":4,"s":"2025-07-26","e":"2025-07-27","full":"Sat 26 \u2013 Sun 27 Jul 2025","short":"26\u201327 Jul","m":"JULY 2025","t":"","lw":0},{"p":"25/26","n":5,"s":"2025-08-02","e":"2025-08-03","full":"Sat 2 \u2013 Sun 3 Aug 2025","short":"2\u20133 Aug","m":"AUGUST 2025","t":"","lw":0},{"p":"25/26","n":6,"s":"2025-08-09","e":"2025-08-10","full":"Sat 9 \u2013 Sun 10 Aug 2025","short":"9\u201310 Aug","m":"AUGUST 2025","t":"","lw":0},{"p":"25/26","n":7,"s":"2025-08-16","e":"2025-08-17","full":"Sat 16 \u2013 Sun 17 Aug 2025","short":"16\u201317 Aug","m":"AUGUST 2025","t":"","lw":0},{"p":"25/26","n":8,"s":"2025-08-23","e":"2025-08-24","full":"Sat 23 \u2013 Sun 24 Aug 2025","short":"23\u201324 Aug","m":"AUGUST 2025","t":"","lw":0},{"p":"25/26","n":9,"s":"2025-08-30","e":"2025-08-31","full":"Sat 30 \u2013 Sun 31 Aug 2025","short":"30\u201331 Aug","m":"AUGUST 2025","t":"","lw":0},{"p":"25/26","n":10,"s":"2025-09-06","e":"2025-09-07","full":"Sat 6 \u2013 Sun 7 Sep 2025","short":"6\u20137 Sep","m":"SEPTEMBER 2025","t":"","lw":0},{"p":"25/26","n":11,"s":"2025-09-13","e":"2025-09-14","full":"Sat 13 \u2013 Sun 14 Sep 2025","short":"13\u201314 Sep","m":"SEPTEMBER 2025","t":"","lw":0},{"p":"25/26","n":12,"s":"2025-09-20","e":"2025-09-21","full":"Sat 20 \u2013 Sun 21 Sep 2025","short":"20\u201321 Sep","m":"SEPTEMBER 2025","t":"","lw":0},{"p":"25/26","n":13,"s":"2025-09-27","e":"2025-09-28","full":"Sat 27 \u2013 Sun 28 Sep 2025","short":"27\u201328 Sep","m":"SEPTEMBER 2025","t":"","lw":0},{"p":"25/26","n":14,"s":"2025-10-04","e":"2025-10-06","full":"Sat 4 \u2013 Mon 6 Oct 2025","short":"4\u20136 Oct","m":"OCTOBER 2025","t":"Labour Day long weekend","lw":1},{"p":"25/26","n":15,"s":"2025-10-11","e":"2025-10-12","full":"Sat 11 \u2013 Sun 12 Oct 2025","short":"11\u201312 Oct","m":"OCTOBER 2025","t":"","lw":0},{"p":"25/26","n":16,"s":"2025-10-18","e":"2025-10-19","full":"Sat 18 \u2013 Sun 19 Oct 2025","short":"18\u201319 Oct","m":"OCTOBER 2025","t":"","lw":0},{"p":"25/26","n":17,"s":"2025-10-25","e":"2025-10-26","full":"Sat 25 \u2013 Sun 26 Oct 2025","short":"25\u201326 Oct","m":"OCTOBER 2025","t":"","lw":0},{"p":"25/26","n":18,"s":"2025-11-01","e":"2025-11-02","full":"Sat 1 \u2013 Sun 2 Nov 2025","short":"1\u20132 Nov","m":"NOVEMBER 2025","t":"","lw":0},{"p":"25/26","n":19,"s":"2025-11-08","e":"2025-11-09","full":"Sat 8 \u2013 Sun 9 Nov 2025","short":"8\u20139 Nov","m":"NOVEMBER 2025","t":"","lw":0},{"p":"25/26","n":20,"s":"2025-11-15","e":"2025-11-16","full":"Sat 15 \u2013 Sun 16 Nov 2025","short":"15\u201316 Nov","m":"NOVEMBER 2025","t":"","lw":0},{"p":"25/26","n":21,"s":"2025-11-22","e":"2025-11-23","full":"Sat 22 \u2013 Sun 23 Nov 2025","short":"22\u201323 Nov","m":"NOVEMBER 2025","t":"","lw":0},{"p":"25/26","n":22,"s":"2025-11-29","e":"2025-11-30","full":"Sat 29 \u2013 Sun 30 Nov 2025","short":"29\u201330 Nov","m":"NOVEMBER 2025","t":"","lw":0},{"p":"25/26","n":23,"s":"2025-12-06","e":"2025-12-07","full":"Sat 6 \u2013 Sun 7 Dec 2025","short":"6\u20137 Dec","m":"DECEMBER 2025","t":"","lw":0},{"p":"25/26","n":24,"s":"2025-12-13","e":"2025-12-14","full":"Sat 13 \u2013 Sun 14 Dec 2025","short":"13\u201314 Dec","m":"DECEMBER 2025","t":"","lw":0},{"p":"25/26","n":25,"s":"2025-12-20","e":"2025-12-21","full":"Sat 20 \u2013 Sun 21 Dec 2025","short":"20\u201321 Dec","m":"DECEMBER 2025","t":"","lw":0},{"p":"25/26","n":26,"s":"2025-12-27","e":"2025-12-28","full":"Sat 27 \u2013 Sun 28 Dec 2025","short":"27\u201328 Dec","m":"DECEMBER 2025","t":"Boxing Day Fri 26 Dec","lw":0},{"p":"25/26","n":27,"s":"2026-01-03","e":"2026-01-04","full":"Sat 3 \u2013 Sun 4 Jan 2026","short":"3\u20134 Jan","m":"JANUARY 2026","t":"New Year weekend","lw":0},{"p":"25/26","n":28,"s":"2026-01-10","e":"2026-01-11","full":"Sat 10 \u2013 Sun 11 Jan 2026","short":"10\u201311 Jan","m":"JANUARY 2026","t":"","lw":0},{"p":"25/26","n":29,"s":"2026-01-17","e":"2026-01-18","full":"Sat 17 \u2013 Sun 18 Jan 2026","short":"17\u201318 Jan","m":"JANUARY 2026","t":"","lw":0},{"p":"25/26","n":30,"s":"2026-01-24","e":"2026-01-26","full":"Sat 24 \u2013 Mon 26 Jan 2026","short":"24\u201326 Jan","m":"JANUARY 2026","t":"Australia Day long weekend","lw":1},{"p":"25/26","n":31,"s":"2026-01-31","e":"2026-02-01","full":"Sat 31 Jan \u2013 Sun 1 Feb 2026","short":"31 Jan \u2013 1 Feb","m":"JANUARY 2026","t":"","lw":0},{"p":"25/26","n":32,"s":"2026-02-07","e":"2026-02-08","full":"Sat 7 \u2013 Sun 8 Feb 2026","short":"7\u20138 Feb","m":"FEBRUARY 2026","t":"","lw":0},{"p":"25/26","n":33,"s":"2026-02-14","e":"2026-02-15","full":"Sat 14 \u2013 Sun 15 Feb 2026","short":"14\u201315 Feb","m":"FEBRUARY 2026","t":"","lw":0},{"p":"25/26","n":34,"s":"2026-02-21","e":"2026-02-22","full":"Sat 21 \u2013 Sun 22 Feb 2026","short":"21\u201322 Feb","m":"FEBRUARY 2026","t":"","lw":0},{"p":"25/26","n":35,"s":"2026-02-28","e":"2026-03-01","full":"Sat 28 Feb \u2013 Sun 1 Mar 2026","short":"28 Feb \u2013 1 Mar","m":"FEBRUARY 2026","t":"","lw":0},{"p":"25/26","n":36,"s":"2026-03-07","e":"2026-03-08","full":"Sat 7 \u2013 Sun 8 Mar 2026","short":"7\u20138 Mar","m":"MARCH 2026","t":"","lw":0},{"p":"25/26","n":37,"s":"2026-03-14","e":"2026-03-15","full":"Sat 14 \u2013 Sun 15 Mar 2026","short":"14\u201315 Mar","m":"MARCH 2026","t":"","lw":0},{"p":"25/26","n":38,"s":"2026-03-21","e":"2026-03-22","full":"Sat 21 \u2013 Sun 22 Mar 2026","short":"21\u201322 Mar","m":"MARCH 2026","t":"","lw":0},{"p":"25/26","n":39,"s":"2026-03-28","e":"2026-03-29","full":"Sat 28 \u2013 Sun 29 Mar 2026","short":"28\u201329 Mar","m":"MARCH 2026","t":"","lw":0},{"p":"25/26","n":40,"s":"2026-04-03","e":"2026-04-06","full":"Fri 3 \u2013 Mon 6 Apr 2026","short":"3\u20136 Apr","m":"APRIL 2026","t":"Easter","lw":1},{"p":"25/26","n":41,"s":"2026-04-11","e":"2026-04-12","full":"Sat 11 \u2013 Sun 12 Apr 2026","short":"11\u201312 Apr","m":"APRIL 2026","t":"","lw":0},{"p":"25/26","n":42,"s":"2026-04-18","e":"2026-04-19","full":"Sat 18 \u2013 Sun 19 Apr 2026","short":"18\u201319 Apr","m":"APRIL 2026","t":"","lw":0},{"p":"25/26","n":43,"s":"2026-04-25","e":"2026-04-26","full":"Sat 25 \u2013 Sun 26 Apr 2026","short":"25\u201326 Apr","m":"APRIL 2026","t":"Anzac Day Sat 25 Apr","lw":0},{"p":"25/26","n":44,"s":"2026-05-02","e":"2026-05-03","full":"Sat 2 \u2013 Sun 3 May 2026","short":"2\u20133 May","m":"MAY 2026","t":"","lw":0},{"p":"25/26","n":45,"s":"2026-05-09","e":"2026-05-10","full":"Sat 9 \u2013 Sun 10 May 2026","short":"9\u201310 May","m":"MAY 2026","t":"","lw":0},{"p":"25/26","n":46,"s":"2026-05-16","e":"2026-05-17","full":"Sat 16 \u2013 Sun 17 May 2026","short":"16\u201317 May","m":"MAY 2026","t":"","lw":0},{"p":"25/26","n":47,"s":"2026-05-23","e":"2026-05-24","full":"Sat 23 \u2013 Sun 24 May 2026","short":"23\u201324 May","m":"MAY 2026","t":"","lw":0},{"p":"25/26","n":48,"s":"2026-05-30","e":"2026-05-31","full":"Sat 30 \u2013 Sun 31 May 2026","short":"30\u201331 May","m":"MAY 2026","t":"","lw":0},{"p":"25/26","n":49,"s":"2026-06-06","e":"2026-06-08","full":"Sat 6 \u2013 Mon 8 Jun 2026","short":"6\u20138 Jun","m":"JUNE 2026","t":"King's Birthday long weekend","lw":1},{"p":"25/26","n":50,"s":"2026-06-13","e":"2026-06-14","full":"Sat 13 \u2013 Sun 14 Jun 2026","short":"13\u201314 Jun","m":"JUNE 2026","t":"","lw":0},{"p":"25/26","n":51,"s":"2026-06-20","e":"2026-06-21","full":"Sat 20 \u2013 Sun 21 Jun 2026","short":"20\u201321 Jun","m":"JUNE 2026","t":"","lw":0},{"p":"25/26","n":52,"s":"2026-06-27","e":"2026-06-28","full":"Sat 27 \u2013 Sun 28 Jun 2026","short":"27\u201328 Jun","m":"JUNE 2026","t":"","lw":0},{"p":"26/27","n":1,"s":"2026-07-04","e":"2026-07-05","full":"Sat 4 \u2013 Sun 5 Jul 2026","short":"4\u20135 Jul","m":"JULY 2026","t":"","lw":0},{"p":"26/27","n":2,"s":"2026-07-11","e":"2026-07-12","full":"Sat 11 \u2013 Sun 12 Jul 2026","short":"11\u201312 Jul","m":"JULY 2026","t":"","lw":0},{"p":"26/27","n":3,"s":"2026-07-18","e":"2026-07-19","full":"Sat 18 \u2013 Sun 19 Jul 2026","short":"18\u201319 Jul","m":"JULY 2026","t":"","lw":0},{"p":"26/27","n":4,"s":"2026-07-25","e":"2026-07-26","full":"Sat 25 \u2013 Sun 26 Jul 2026","short":"25\u201326 Jul","m":"JULY 2026","t":"","lw":0},{"p":"26/27","n":5,"s":"2026-08-01","e":"2026-08-02","full":"Sat 1 \u2013 Sun 2 Aug 2026","short":"1\u20132 Aug","m":"AUGUST 2026","t":"","lw":0},{"p":"26/27","n":6,"s":"2026-08-08","e":"2026-08-09","full":"Sat 8 \u2013 Sun 9 Aug 2026","short":"8\u20139 Aug","m":"AUGUST 2026","t":"","lw":0},{"p":"26/27","n":7,"s":"2026-08-15","e":"2026-08-16","full":"Sat 15 \u2013 Sun 16 Aug 2026","short":"15\u201316 Aug","m":"AUGUST 2026","t":"","lw":0},{"p":"26/27","n":8,"s":"2026-08-22","e":"2026-08-23","full":"Sat 22 \u2013 Sun 23 Aug 2026","short":"22\u201323 Aug","m":"AUGUST 2026","t":"","lw":0},{"p":"26/27","n":9,"s":"2026-08-29","e":"2026-08-30","full":"Sat 29 \u2013 Sun 30 Aug 2026","short":"29\u201330 Aug","m":"AUGUST 2026","t":"","lw":0},{"p":"26/27","n":10,"s":"2026-09-05","e":"2026-09-06","full":"Sat 5 \u2013 Sun 6 Sep 2026","short":"5\u20136 Sep","m":"SEPTEMBER 2026","t":"","lw":0},{"p":"26/27","n":11,"s":"2026-09-12","e":"2026-09-13","full":"Sat 12 \u2013 Sun 13 Sep 2026","short":"12\u201313 Sep","m":"SEPTEMBER 2026","t":"","lw":0},{"p":"26/27","n":12,"s":"2026-09-19","e":"2026-09-20","full":"Sat 19 \u2013 Sun 20 Sep 2026","short":"19\u201320 Sep","m":"SEPTEMBER 2026","t":"","lw":0},{"p":"26/27","n":13,"s":"2026-09-26","e":"2026-09-27","full":"Sat 26 \u2013 Sun 27 Sep 2026","short":"26\u201327 Sep","m":"SEPTEMBER 2026","t":"","lw":0},{"p":"26/27","n":14,"s":"2026-10-03","e":"2026-10-05","full":"Sat 3 \u2013 Mon 5 Oct 2026","short":"3\u20135 Oct","m":"OCTOBER 2026","t":"Labour Day long weekend","lw":1},{"p":"26/27","n":15,"s":"2026-10-10","e":"2026-10-11","full":"Sat 10 \u2013 Sun 11 Oct 2026","short":"10\u201311 Oct","m":"OCTOBER 2026","t":"","lw":0},{"p":"26/27","n":16,"s":"2026-10-17","e":"2026-10-18","full":"Sat 17 \u2013 Sun 18 Oct 2026","short":"17\u201318 Oct","m":"OCTOBER 2026","t":"","lw":0},{"p":"26/27","n":17,"s":"2026-10-24","e":"2026-10-25","full":"Sat 24 \u2013 Sun 25 Oct 2026","short":"24\u201325 Oct","m":"OCTOBER 2026","t":"","lw":0},{"p":"26/27","n":18,"s":"2026-10-31","e":"2026-11-01","full":"Sat 31 Oct \u2013 Sun 1 Nov 2026","short":"31 Oct \u2013 1 Nov","m":"OCTOBER 2026","t":"","lw":0},{"p":"26/27","n":19,"s":"2026-11-07","e":"2026-11-08","full":"Sat 7 \u2013 Sun 8 Nov 2026","short":"7\u20138 Nov","m":"NOVEMBER 2026","t":"","lw":0},{"p":"26/27","n":20,"s":"2026-11-14","e":"2026-11-15","full":"Sat 14 \u2013 Sun 15 Nov 2026","short":"14\u201315 Nov","m":"NOVEMBER 2026","t":"","lw":0},{"p":"26/27","n":21,"s":"2026-11-21","e":"2026-11-22","full":"Sat 21 \u2013 Sun 22 Nov 2026","short":"21\u201322 Nov","m":"NOVEMBER 2026","t":"","lw":0},{"p":"26/27","n":22,"s":"2026-11-28","e":"2026-11-29","full":"Sat 28 \u2013 Sun 29 Nov 2026","short":"28\u201329 Nov","m":"NOVEMBER 2026","t":"","lw":0},{"p":"26/27","n":23,"s":"2026-12-05","e":"2026-12-06","full":"Sat 5 \u2013 Sun 6 Dec 2026","short":"5\u20136 Dec","m":"DECEMBER 2026","t":"","lw":0},{"p":"26/27","n":24,"s":"2026-12-12","e":"2026-12-13","full":"Sat 12 \u2013 Sun 13 Dec 2026","short":"12\u201313 Dec","m":"DECEMBER 2026","t":"","lw":0},{"p":"26/27","n":25,"s":"2026-12-19","e":"2026-12-20","full":"Sat 19 \u2013 Sun 20 Dec 2026","short":"19\u201320 Dec","m":"DECEMBER 2026","t":"","lw":0},{"p":"26/27","n":26,"s":"2026-12-26","e":"2026-12-28","full":"Sat 26 \u2013 Mon 28 Dec 2026","short":"26\u201328 Dec","m":"DECEMBER 2026","t":"Boxing Day long weekend","lw":1},{"p":"26/27","n":27,"s":"2027-01-02","e":"2027-01-03","full":"Sat 2 \u2013 Sun 3 Jan 2027","short":"2\u20133 Jan","m":"JANUARY 2027","t":"New Year's Day Fri 1 Jan","lw":0},{"p":"26/27","n":28,"s":"2027-01-09","e":"2027-01-10","full":"Sat 9 \u2013 Sun 10 Jan 2027","short":"9\u201310 Jan","m":"JANUARY 2027","t":"","lw":0},{"p":"26/27","n":29,"s":"2027-01-16","e":"2027-01-17","full":"Sat 16 \u2013 Sun 17 Jan 2027","short":"16\u201317 Jan","m":"JANUARY 2027","t":"","lw":0},{"p":"26/27","n":30,"s":"2027-01-23","e":"2027-01-24","full":"Sat 23 \u2013 Sun 24 Jan 2027","short":"23\u201324 Jan","m":"JANUARY 2027","t":"","lw":0},{"p":"26/27","n":31,"s":"2027-01-30","e":"2027-01-31","full":"Sat 30 \u2013 Sun 31 Jan 2027","short":"30\u201331 Jan","m":"JANUARY 2027","t":"","lw":0},{"p":"26/27","n":32,"s":"2027-02-06","e":"2027-02-07","full":"Sat 6 \u2013 Sun 7 Feb 2027","short":"6\u20137 Feb","m":"FEBRUARY 2027","t":"","lw":0},{"p":"26/27","n":33,"s":"2027-02-13","e":"2027-02-14","full":"Sat 13 \u2013 Sun 14 Feb 2027","short":"13\u201314 Feb","m":"FEBRUARY 2027","t":"","lw":0},{"p":"26/27","n":34,"s":"2027-02-20","e":"2027-02-21","full":"Sat 20 \u2013 Sun 21 Feb 2027","short":"20\u201321 Feb","m":"FEBRUARY 2027","t":"","lw":0},{"p":"26/27","n":35,"s":"2027-02-27","e":"2027-02-28","full":"Sat 27 \u2013 Sun 28 Feb 2027","short":"27\u201328 Feb","m":"FEBRUARY 2027","t":"","lw":0},{"p":"26/27","n":36,"s":"2027-03-06","e":"2027-03-07","full":"Sat 6 \u2013 Sun 7 Mar 2027","short":"6\u20137 Mar","m":"MARCH 2027","t":"","lw":0},{"p":"26/27","n":37,"s":"2027-03-13","e":"2027-03-14","full":"Sat 13 \u2013 Sun 14 Mar 2027","short":"13\u201314 Mar","m":"MARCH 2027","t":"","lw":0},{"p":"26/27","n":38,"s":"2027-03-20","e":"2027-03-21","full":"Sat 20 \u2013 Sun 21 Mar 2027","short":"20\u201321 Mar","m":"MARCH 2027","t":"","lw":0},{"p":"26/27","n":39,"s":"2027-03-26","e":"2027-03-29","full":"Fri 26 \u2013 Mon 29 Mar 2027","short":"26\u201329 Mar","m":"MARCH 2027","t":"Easter","lw":1},{"p":"26/27","n":40,"s":"2027-04-03","e":"2027-04-04","full":"Sat 3 \u2013 Sun 4 Apr 2027","short":"3\u20134 Apr","m":"APRIL 2027","t":"","lw":0},{"p":"26/27","n":41,"s":"2027-04-10","e":"2027-04-11","full":"Sat 10 \u2013 Sun 11 Apr 2027","short":"10\u201311 Apr","m":"APRIL 2027","t":"","lw":0},{"p":"26/27","n":42,"s":"2027-04-17","e":"2027-04-18","full":"Sat 17 \u2013 Sun 18 Apr 2027","short":"17\u201318 Apr","m":"APRIL 2027","t":"","lw":0},{"p":"26/27","n":43,"s":"2027-04-24","e":"2027-04-25","full":"Sat 24 \u2013 Sun 25 Apr 2027","short":"24\u201325 Apr","m":"APRIL 2027","t":"Anzac Day Sun 25 Apr","lw":0},{"p":"26/27","n":44,"s":"2027-05-01","e":"2027-05-02","full":"Sat 1 \u2013 Sun 2 May 2027","short":"1\u20132 May","m":"MAY 2027","t":"","lw":0},{"p":"26/27","n":45,"s":"2027-05-08","e":"2027-05-09","full":"Sat 8 \u2013 Sun 9 May 2027","short":"8\u20139 May","m":"MAY 2027","t":"","lw":0},{"p":"26/27","n":46,"s":"2027-05-15","e":"2027-05-16","full":"Sat 15 \u2013 Sun 16 May 2027","short":"15\u201316 May","m":"MAY 2027","t":"","lw":0},{"p":"26/27","n":47,"s":"2027-05-22","e":"2027-05-23","full":"Sat 22 \u2013 Sun 23 May 2027","short":"22\u201323 May","m":"MAY 2027","t":"","lw":0},{"p":"26/27","n":48,"s":"2027-05-29","e":"2027-05-30","full":"Sat 29 \u2013 Sun 30 May 2027","short":"29\u201330 May","m":"MAY 2027","t":"","lw":0},{"p":"26/27","n":49,"s":"2027-06-05","e":"2027-06-06","full":"Sat 5 \u2013 Sun 6 Jun 2027","short":"5\u20136 Jun","m":"JUNE 2027","t":"","lw":0},{"p":"26/27","n":50,"s":"2027-06-12","e":"2027-06-14","full":"Sat 12 \u2013 Mon 14 Jun 2027","short":"12\u201314 Jun","m":"JUNE 2027","t":"King's Birthday long weekend","lw":1},{"p":"26/27","n":51,"s":"2027-06-19","e":"2027-06-20","full":"Sat 19 \u2013 Sun 20 Jun 2027","short":"19\u201320 Jun","m":"JUNE 2027","t":"","lw":0},{"p":"26/27","n":52,"s":"2027-06-26","e":"2027-06-27","full":"Sat 26 \u2013 Sun 27 Jun 2027","short":"26\u201327 Jun","m":"JUNE 2027","t":"","lw":0}];
+
+const $ = id => document.getElementById(id);
+const listEl = $('list'), weInput = $('weInput');
+
+// ---- date helpers (all local-time, midnight) ----
+function iso2d(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function today0(){ const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+const DAY = 86400000;
+
+// current = first weekend (chronologically) whose end >= today
+function findCurrent(){
+  const t = today0().getTime();
+  for (const r of WE_DATA){ if (iso2d(r.e).getTime() >= t) return r; }
+  return WE_DATA[WE_DATA.length - 1];
+}
+const CURRENT = findCurrent();
+
+let prog = CURRENT.p;
+let selN = CURRENT.n;
+
+const byProg = p => WE_DATA.filter(r => r.p === p);
+const getRow = (p, n) => WE_DATA.find(r => r.p === p && r.n === n);
+
+function relText(r){
+  const t = today0().getTime();
+  const s = iso2d(r.s).getTime(), e = iso2d(r.e).getTime();
+  if (t >= s && t <= e) return ['This weekend', true];
+  if (t < s){
+    const days = Math.round((s - t) / DAY);
+    if (days <= 6) return ['In ' + days + (days === 1 ? ' day' : ' days'), true];
+    const w = Math.round(days / 7);
+    return ['In ' + w + (w === 1 ? ' week' : ' weeks'), false];
+  }
+  const days = Math.round((t - e) / DAY);
+  if (days <= 6) return [days + (days === 1 ? ' day ago' : ' days ago'), false];
+  const w = Math.round(days / 7);
+  return [w + (w === 1 ? ' week ago' : ' weeks ago'), false];
+}
+
+function renderHero(){
+  const r = getRow(prog, selN);
+  weInput.value = String(r.n).padStart(2, '0');
+  $('dates').textContent = r.full;
+  $('tag').textContent = r.t || '';
+  const [txt, isNow] = relText(r);
+  $('status').textContent = txt;
+  $('status').classList.toggle('now', isNow);
+  $('dot').classList.toggle('now', isNow);
+  $('prevBtn').disabled = r.n <= 1;
+  $('nextBtn').disabled = r.n >= 52;
+  $('seg2526').classList.toggle('on', prog === '25/26');
+  $('seg2627').classList.toggle('on', prog === '26/27');
+}
+
+function renderList(){
+  const rows = byProg(prog);
+  const t = today0().getTime();
+  let html = '', lastMonth = '';
+  for (const r of rows){
+    if (r.m !== lastMonth){ html += '<div class="month">' + r.m + '</div>'; lastMonth = r.m; }
+    const past = iso2d(r.e).getTime() < t;
+    const isCur = (r.p === CURRENT.p && r.n === CURRENT.n);
+    html += '<div class="row' + (past ? ' past' : '') + '" data-n="' + r.n + '" id="row' + r.n + '">'
+      + '<span class="badge">WE' + String(r.n).padStart(2, '0') + '</span>'
+      + '<span class="rdates tnum">' + r.short + '</span>'
+      + (isCur ? '<span class="nowchip">NOW</span>' : '')
+      + (r.t ? '<span class="rtag">' + r.t + '</span>' : '')
+      + '</div>';
+  }
+  html += '<div class="foot">25/26 per official Possession Configuration V7 (RailSafe). '
+    + '26/27 is provisional &mdash; derived from the standard pattern (WE01 = 4&ndash;5 Jul 26); '
+    + 'confirm against the official 26/27 Possession Configuration once published.</div>';
+  listEl.innerHTML = html;
+  markSel(false);
+}
+
+function markSel(scroll){
+  listEl.querySelectorAll('.row.sel').forEach(el => el.classList.remove('sel'));
+  const el = $('row' + selN);
+  if (el){
+    el.classList.add('sel');
+    if (scroll){
+      const top = el.offsetTop - listEl.clientHeight / 2 + el.clientHeight / 2;
+      listEl.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
+  }
+}
+
+function select(n, scroll){
+  selN = Math.min(52, Math.max(1, n));
+  renderHero();
+  markSel(scroll !== false);
+}
+
+function setProg(p){
+  if (prog === p) return;
+  prog = p;
+  renderHero();
+  renderList();
+  markSel(true);
+}
+
+// ---- events ----
+$('prevBtn').addEventListener('click', () => select(selN - 1));
+$('nextBtn').addEventListener('click', () => select(selN + 1));
+$('todayBtn').addEventListener('click', () => {
+  prog = CURRENT.p; selN = CURRENT.n;
+  renderHero(); renderList(); markSel(true);
+});
+$('seg2526').addEventListener('click', () => setProg('25/26'));
+$('seg2627').addEventListener('click', () => setProg('26/27'));
+
+listEl.addEventListener('click', e => {
+  const row = e.target.closest('.row');
+  if (row) select(Number(row.dataset.n));
+});
+
+weInput.addEventListener('focus', () => { weInput.select(); });
+weInput.addEventListener('input', () => {
+  const v = weInput.value.replace(/\D/g, '');
+  weInput.value = v;
+  const n = Number(v);
+  if (v && n >= 1 && n <= 52){
+    selN = n; 
+    const r = getRow(prog, selN);
+    $('dates').textContent = r.full;
+    $('tag').textContent = r.t || '';
+    const [txt, isNow] = relText(r);
+    $('status').textContent = txt;
+    $('status').classList.toggle('now', isNow);
+    $('dot').classList.toggle('now', isNow);
+    markSel(true);
+  }
+});
+weInput.addEventListener('blur', () => {
+  renderHero();
+  window.scrollTo(0, 0); // iOS keyboard-dismiss snap
+});
+weInput.addEventListener('keydown', e => { if (e.key === 'Enter') weInput.blur(); });
+
+// ---- init ----
+renderHero();
+renderList();
+requestAnimationFrame(() => markSel(true));
+</script>
+</body>
+</html>
